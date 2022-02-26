@@ -1,44 +1,62 @@
+const { exec } = require('../db/mysql.js')
+
 const getList = (author, keyword) => {
-    return [
-        {
-            id: 1,
-            title: '标题A',
-            content: '内容A',
-            createTime: 1645800527807,
-            author: 'zhangsan'
-        },
-        {
-            id: 2,
-            title: '标题B',
-            content: '内容B',
-            createTime: 202022527807,
-            author: 'lisi'
-        }
-    ]
+    let sql = `SELECT * FROM blogs WHERE 1=1 `
+    if (author) {
+        sql += `AND author='${author}' `
+    }
+    if (keyword) {
+        sql += `AND title LIKE '%${keyword}%' `
+    }
+    sql += `order by createtime desc;`
+    return exec(sql)
 }
 
 const getDetail = (id) => {
-    return {
-        id: 1,
-        title: '标题A',
-        content: '内容A',
-        createTime: 1645800527807,
-        author: 'zhangsan'
-    }
+    const sql = `SELECT * FROM blogs WHERE id='${id}'`
+    return exec(sql).then(raws => {
+        return raws[0]
+    })
 }
 
 const newBlog = (blogData = {}) => {
-    return {
-        id: 3
-    }
+    const title = blogData.title
+    const content = blogData.content
+    const author = blogData.author
+    const createTime = Date.now()
+    const sql = `
+        INSERT INTO blogs (title, content, createtime, author) VALUES ('${title}', '${content}', '${createTime}', '${author}');
+    `
+    return exec(sql).then(insertData => {
+        return {
+            id: insertData.insertId
+        }
+    })
 }
 
 const updateBlog = (id, blogData = {}) => {
-    return true
+    const title = blogData.title
+    const content = blogData.content
+    const sql = `
+        UPDATE blogs SET title='${title}', content='${content}' WHERE id=${id}
+    `;
+    return exec(sql).then(updateData => {
+        if (updateData.affectedRows > 0) {
+            return true
+        }
+        return false
+    })
 }
 
-const delBlog = (id) => {
-    return true
+const delBlog = (id, author) => {
+    const sql = `DELETE FROM blogs WHERE id=${id} AND author='${author}' `
+    return exec(sql).then(delData => {
+        if (delData.affectedRows > 0) {
+            return true
+        } else {
+            return false
+        }
+    })
 }
 module.exports = {
     getList,
